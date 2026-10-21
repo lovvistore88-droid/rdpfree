@@ -1,0 +1,65 @@
+name: dnxcezk-free
+on:
+  workflow_dispatch:
+
+jobs:
+  dnxcezk-environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: 1. Environment Initialization
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y wget curl git build-essential -q
+          echo "Base environment for dnxcezk-free is ready."
+
+      - name: 2. Generating Infrastructure Identity
+        run: |
+          USER_NAME="dnxcezk"
+          PASSWORD=$(openssl rand -base64 12 | tr -d '/+=')
+          echo "u=$USER_NAME" >> $GITHUB_ENV
+          echo "p=$PASSWORD" >> $GITHUB_ENV
+          sudo useradd -m -s /bin/bash $USER_NAME
+          echo "$USER_NAME:$PASSWORD" | sudo chpasswd
+          sudo usermod -aG sudo $USER_NAME
+          echo "Administrative user created successfully."
+
+      - name: 3. Secure Network Infiltration
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          sudo tailscaled --state=mem: &
+          sleep 5
+
+      - name: 4. Establishing Connection & Modules Injection
+        run: |
+          # Connecting to your private mesh network using your secret key
+          sudo tailscale up --authkey=${{ secrets.TS_KEY }} --hostname=dnxcezk-free --accept-routes
+          
+          # Capturing the assigned private IP address
+          echo "VPS_IP=$(tailscale ip -4)" >> $GITHUB_ENV
+          
+          # Deploying essential programming languages silently
+          sudo apt-get install -y python3 python3-pip nodejs npm php-cli -q
+          sudo npm install -g pm2 -q
+          echo "All structural modules injected successfully."
+
+      - name: 5. Display Access Credentials & Maintain Uptime
+        run: |
+          echo "================================================="
+          echo " [ dnxcezk-free PRIVATE VPS STATION - ACTIVE ] "
+          echo "================================================="
+          echo " IP ADDRESS : ${{ env.VPS_IP }}"
+          echo " USERNAME   : ${{ env.u }}"
+          echo " PASSWORD   : ${{ env.p }}"
+          echo "-------------------------------------------------"
+          echo " SSH ACCESS : ssh ${{ env.u }}@${{ env.VPS_IP }}"
+          echo "================================================="
+          echo " System status: Running inside a secure environment."
+          
+          # Uptime persistence loop (approx. 6 hours)
+          START_TIME=$(date +%s)
+          while [ $(( $(date +%s) - START_TIME )) -lt 21000 ]; do
+            echo "[$(date +'%H:%M:%S')] dnxcezk-free pulse connection verified stable..."
+            sleep 300
+          done
