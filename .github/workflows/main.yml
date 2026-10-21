@@ -1,6 +1,12 @@
 # =============================================================
 # SAKUTOPUP FREE RDP - ULTRA PERFORMANCE VERSION (6 JAM)
 # =============================================================
+# INSTRUKSI PENGGUNAAN:
+# 1. Simpan file ini di .github/workflows/main.yml
+# 2. Ambil AUTH KEY di Tailscale.com.
+# 3. Masukkan ke Settings > Secrets > Actions (Nama: TS_KEY).
+# 4. Jalankan via tab ACTIONS.
+# =============================================================
 
 name: SAKUTOPUP-FREE-6H-FAST
 on:
@@ -9,12 +15,12 @@ on:
 jobs:
   deployment:
     runs-on: windows-latest
-    timeout-minutes: 360
+    timeout-minutes: 360 # Batas maksimal GitHub Actions (6 Jam)
 
     steps:
       - name: 1. System Preparation & Performance Tweaks
         run: |
-          # Aktifkan RDP
+          # Aktifkan RDP & Buka Firewall
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force
           netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
@@ -25,44 +31,56 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MinEncryptionLevel" -Value 1 -Force
           
           # Matikan Service Berat yang Nggak Perlu
-          Stop-Service -Name "SysMain" -WarningAction SilentlyContinue # Superfetch
+          Stop-Service -Name "SysMain" -WarningAction SilentlyContinue
           Set-Service -Name "SysMain" -StartupType Disabled -WarningAction SilentlyContinue
           
           Restart-Service -Name TermService -Force
 
-      - name: 2. Identity Generation
+      - name: 2. Identity Generation (Random)
         run: |
           $id = Get-Random -Minimum 1000 -Maximum 9999
           $u = "UserSAKU$id"
           
+          # Password Generator (Fix Spasi Syntax)
           $sets = @("ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnpqrstuvwxyz", "23456789")
           $p = ""
-          foreach ($s in $sets) {$p += $s[(Get-Random -Maximum$s.Length)] }
-          $all = -join$sets
-          for ($i=1; $i -le 11; $i++) {$p += $all[(Get-Random -Maximum$all.Length)] }
+          foreach ($s in $sets) { 
+              $idx = Get-Random -Maximum $s.Length
+              $p += $s[$idx] 
+          }
+          $all = -join $sets
+          for ($i=1; $i -le 11; $i++) { 
+              $idx = Get-Random -Maximum $all.Length
+              $p += $all[$idx] 
+          }
           
           echo "SAKU_USER=$u" >> $env:GITHUB_ENV
           echo "SAKU_PASS=$p" >> $env:GITHUB_ENV
           
-          net user $u$p /add /y
+          net user $u $p /add /y
           net localgroup Administrators $u /add
 
       - name: 3. Download & Install Software
         run: |
-          # Install Chrome dengan optimasi bawaan
+          # Install Google Chrome
           winget install --id Google.Chrome --silent --accept-source-agreements --accept-package-agreements
 
-          # Download TikTok Studio
+          # Download & Install TikTok Live Studio
           $ttsInstaller = "$env:TEMP\TikTokStudioSetup.exe"
           Invoke-WebRequest -Uri "https://sf16-va.tiktokcdn.com/obj/eden-va2/pha_m_ehlys_sve_zy/TikTokLiveStudio/TikTokLiveStudioSetup.exe" -OutFile $ttsInstaller
           Start-Process -FilePath $ttsInstaller -ArgumentList "/S" -Wait
 
-          # Shortcut
+          # Pintasan Desktop
           $Desktop = "C:\Users\Public\Desktop"
           $Shell = New-Object -ComObject WScript.Shell
+          
           $ShortcutTT = $Shell.CreateShortcut("$Desktop\TikTok.url")
           $ShortcutTT.TargetPath = "https://www.tiktok.com/"
           $ShortcutTT.Save()
+
+          $ShortcutSaku = $Shell.CreateShortcut("$Desktop\SAKUTOPUP-WEB.url")
+          $ShortcutSaku.TargetPath = "https://sakutopup.gamesquad.id/"
+          $ShortcutSaku.Save()
 
       - name: 4. Secure Tunneling
         run: |
@@ -83,6 +101,7 @@ jobs:
           Write-Host " IP ADDRESS : $env:SAKU_IP"
           Write-Host " USERNAME   : $env:SAKU_USER"
           Write-Host " PASSWORD   : $env:SAKU_PASS"
+          Write-Host " DURASI     : 6 JAM (STEALTH)"
           Write-Host "==============================================="
           
           $start = Get-Date
