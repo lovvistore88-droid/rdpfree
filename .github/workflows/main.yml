@@ -62,18 +62,25 @@ jobs:
 
       - name: 3. Download & Install Software
         run: |
-          # Install Google Chrome
+          # Install Google Chrome via Winget
           winget install --id Google.Chrome --silent --accept-source-agreements --accept-package-agreements
 
-          # Download & Install TikTok Live Studio
-          $ttsInstaller = "$env:TEMP\TikTokStudioSetup.exe"
-          Invoke-WebRequest -Uri "https://sf16-va.tiktokcdn.com/obj/eden-va2/pha_m_ehlys_sve_zy/TikTokLiveStudio/TikTokLiveStudioSetup.exe" -OutFile $ttsInstaller
-          Start-Process -FilePath $ttsInstaller -ArgumentList "/S" -Wait
+          # Coba Install TikTok Live Studio via Winget / Web Fallback
+          try {
+              winget install --id TikTok.TikTokStudio --silent --accept-source-agreements --accept-package-agreements
+          } catch {
+              Write-Host "Winget TikTok Studio gagal, menyiapkan link browser..."
+          }
 
           # Pintasan Desktop
           $Desktop = "C:\Users\Public\Desktop"
           $Shell = New-Object -ComObject WScript.Shell
           
+          # Shortcut Web TikTok Live Studio (Aman jika offline)
+          $ShortcutTTS = $Shell.CreateShortcut("$Desktop\Download TikTok Studio.url")
+          $ShortcutTTS.TargetPath = "https://www.tiktok.com/studio/download"
+          $ShortcutTTS.Save()
+
           $ShortcutTT = $Shell.CreateShortcut("$Desktop\TikTok.url")
           $ShortcutTT.TargetPath = "https://www.tiktok.com/"
           $ShortcutTT.Save()
